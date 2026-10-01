@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ShotSmith — استوديو التقاط المواقع</title>
+<meta name="description" content="استوديو التقاط screenshots لأي موقع: مقاسات أجهزة حقيقية، الصفحة كاملة، علامة مائية، مقارنة، رمز QR، ومكتبة تصوير — كله في المتصفح بدون تسجيل.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" id="themeColor" content="#f1f1f2">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://api.microlink.io https://image.thum.io; base-uri 'self'; form-action 'none'; object-src 'none'">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..600,0..1,0&display=swap">
+<script src="assets/js/theme-boot.js"></script>
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+</head>
+<body>
+<a class="skip-link" href="#main">تخطي إلى المحتوى</a>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand__mark"><span class="material-symbols-rounded" aria-hidden="true">photo_camera</span></span>
+    <span>ShotSmith</span>
+    <span class="brand__tag">استوديو الالتقاط</span>
+  </div>
+  <div class="topbar__spacer"></div>
+  <div class="quota" id="quota" data-level="ok" title="محرك microlink يستخدم حصة عامة مشتركة، الرقم تقريبي">
+    <span class="material-symbols-rounded quota__icon" aria-hidden="true">speed</span>
+    <span class="quota__bar" aria-hidden="true"><span class="quota__fill" id="quotaFill"></span></span>
+    <span class="quota__value" id="quotaValue">—</span>
+    <span class="sr-only" role="status" aria-live="polite" id="quotaLive"></span>
+  </div>
+  <button class="btn btn--icon" type="button" data-action="toggle-theme" id="themeToggle" aria-label="تبديل المظهر" title="المظهر">
+    <span class="material-symbols-rounded" aria-hidden="true" id="themeToggleIcon">contrast</span>
+  </button>
+  <button class="btn btn--icon" type="button" data-action="open-palette" aria-label="فتح قائمة الأوامر">
+    <span class="material-symbols-rounded" aria-hidden="true">search</span>
+  </button>
+  <button class="btn btn--icon" type="button" data-action="open-help" aria-label="المساعدة والاختصارات">
+    <span class="material-symbols-rounded" aria-hidden="true">help</span>
+  </button>
+</header>
+
+<main class="page" id="main">
+  <div class="stack">
+    <section class="panel stack" aria-labelledby="capture-heading">
+      <h1 class="section-title" id="capture-heading">
+        <span class="material-symbols-rounded" aria-hidden="true">link</span>
+        رابط الموقع
+      </h1>
+
+      <form id="captureForm" novalidate>
+        <div class="field">
+          <label class="sr-only" for="targetUrl">رابط الموقع المراد التقاطه</label>
+          <div class="input-shell" id="inputShell">
+            <span class="material-symbols-rounded input-shell__icon" aria-hidden="true">language</span>
+            <input type="text" id="targetUrl" name="targetUrl" data-ltr="true"
+                   inputmode="url" autocomplete="url" spellcheck="false" aria-required="true"
+                   placeholder="example.com أو https://example.com/pricing"
+                   aria-describedby="urlHint">
+            <button class="btn btn--sm" type="submit" id="captureButton">
+              <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+              التقاط
+            </button>
+          </div>
+          <p class="field__hint" id="urlHint">الصق الرابط أو اكتب اسم الموقع بدون https.</p>
+          <p class="field__error" id="urlError" hidden role="alert">
+            <span class="material-symbols-rounded" aria-hidden="true">error</span>
+            <span id="urlErrorText"></span>
+          </p>
+        </div>
+      </form>
+
+      <div class="quick-targets">
+        <span class="field__hint">جرّب سريعاً:</span>
+        <button class="chip" type="button" data-quick="example.com">example.com</button>
+        <button class="chip" type="button" data-quick="github.com">github.com</button>
+        <button class="chip" type="button" data-quick="news.ycombinator.com">hacker news</button>
+        <button class="chip" type="button" data-quick="ar.wikipedia.org/wiki/مصر">ويكيبيديا</button>
+        <button class="chip" type="button" data-quick="tailwindcss.com">tailwind</button>
+      </div>
+    </section>
+
+    <section class="panel stack" aria-labelledby="options-heading">
+      <h2 class="section-title" id="options-heading">
+        <span class="material-symbols-rounded" aria-hidden="true">tune</span>
+        إعدادات الالتقاط
+        <span class="section-title__aside" id="optionsSummary"></span>
+      </h2>
+
+      <div class="field">
+        <span class="field__label" id="deviceLabel">
+          <span class="material-symbols-rounded" aria-hidden="true">devices</span>
+          مقاس الجهاز
+        </span>
+        <div class="segmented" id="devicePicker" role="group" aria-labelledby="deviceLabel"></div>
+      </div>
+
+      <div class="option-grid">
+        <div class="choice-group">
+          <span class="choice-group__label" id="formatLabel">صيغة الملف</span>
+          <div class="segmented" id="formatPicker" role="group" aria-labelledby="formatLabel"></div>
+        </div>
+
+        <div class="choice-group">
+          <span class="choice-group__label" id="waitLabel">انتظار تحميل الصفحة</span>
+          <div class="segmented" id="waitPicker" role="group" aria-labelledby="waitLabel"></div>
+        </div>
+      </div>
+
+      <div class="stack stack--tight">
+        <label class="switch-row" for="fullPage">
+          <input type="checkbox" id="fullPage">
+          <span class="switch-row__track" aria-hidden="true"></span>
+          <span class="switch-row__text">
+            <span class="switch-row__title">الصفحة كاملة</span>
+            <span class="switch-row__desc">التقط كل ارتفاع الصفحة بدل الشاشة الأولى فقط</span>
+          </span>
+        </label>
+
+        <label class="switch-row" for="hideScrollbars">
+          <input type="checkbox" id="hideScrollbars" checked>
+          <span class="switch-row__track" aria-hidden="true"></span>
+          <span class="switch-row__text">
+            <span class="switch-row__title">إخفاء أشرطة التمرير</span>
+            <span class="switch-row__desc">أنظف للمشاركة والتوثيق</span>
+          </span>
+        </label>
+
+        <label class="switch-row" for="omitBackground">
+          <input type="checkbox" id="omitBackground">
+          <span class="switch-row__track" aria-hidden="true"></span>
+          <span class="switch-row__text">
+            <span class="switch-row__title">خلفية شفافة</span>
+            <span class="switch-row__desc">يعمل مع PNG فقط — مفيد للأيقونات والعناصر المعزولة</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="range-row" id="qualityRow">
+        <div class="range-row__head">
+          <label class="material-symbols-rounded" for="quality" aria-hidden="true">compress</label>
+          <span>جودة JPG</span>
+          <span class="range-row__value" id="qualityValue">88</span>
+        </div>
+        <input type="range" id="quality" min="30" max="100" step="1" value="88">
+      </div>
+
+      <details class="advanced">
+        <summary>
+          <span class="material-symbols-rounded" aria-hidden="true">expand_more</span>
+          خيارات متقدمة
+        </summary>
+        <div class="advanced__body">
+          <div class="field">
+            <label class="field__label" for="elementSelector">
+              <span class="material-symbols-rounded" aria-hidden="true">my_location</span>
+              التقاط عنصر محدد (CSS selector)
+            </label>
+            <input class="text-input" type="text" id="elementSelector" data-ltr="true"
+                   placeholder="مثال: header, .pricing-card, #hero" spellcheck="false"
+                   aria-describedby="elementHint">
+            <p class="field__hint" id="elementHint">اتركه فارغاً لالتقاط الصفحة كاملة. يعمل مع محرك microlink فقط.</p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="extraWait">
+              <span class="material-symbols-rounded" aria-hidden="true">timer</span>
+              مهلة إضافية قبل الالتقاط (مللي ثانية)
+            </label>
+            <input class="text-input" type="number" id="extraWait" min="0" max="30000" step="500" value="1500">
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="engineOrder">
+              <span class="material-symbols-rounded" aria-hidden="true">account_tree</span>
+              ترتيب المحركات
+            </label>
+            <div class="segmented" id="enginePicker" role="group" aria-labelledby="engineOrder"></div>
+            <p class="field__hint" id="engineHint">محرك thum.io احتياطي تلقائي لو microlink فشل أو تجاوز الحصة.</p>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="stack" aria-live="polite" aria-atomic="true">
+      <div class="status" id="statusBar" role="status" aria-live="polite" aria-atomic="true" hidden>
+        <span class="status__spinner" id="statusSpinner" aria-hidden="true"></span>
+        <div class="status__text">
+          <div class="status__title" id="statusTitle"></div>
+          <div class="status__detail" id="statusDetail"></div>
+        </div>
+        <div class="status__aside" id="statusAside"></div>
+      </div>
+    </section>
+
+    <section class="panel panel--flush" id="stagePanel" aria-labelledby="stage-heading">
+      <h2 class="sr-only" id="stage-heading">نتيجة الالتقاط</h2>
+
+      <div class="stage" id="stage" role="img" aria-label="لم يتم التقاط أي موقع بعد" aria-busy="false">
+        <div class="empty" id="stageEmpty">
+          <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+          <p class="empty__title">لسه مفيش التقاط</p>
+          <p class="empty__text">اكتب رابط أي موقع في الأعلى واضغط التقاط. هتشوف النتيجة هنا فوراً.</p>
+        </div>
+
+        <figure class="device device--desktop" id="deviceFrame" hidden>
+          <div class="device__frame">
+            <span class="device__notch" aria-hidden="true"></span>
+            <div class="device__screen">
+              <img id="captureImage" alt="نتيجة التقاط الموقع" decoding="async">
+            </div>
+            <div class="device__bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          </div>
+          <figcaption class="device__caption" id="stageCaption"></figcaption>
+        </figure>
+      </div>
+
+      <div class="panel stack stack--tight" id="stageActions" hidden>
+        <div class="meta-strip" id="metaStrip"></div>
+        <div class="toolbar">
+          <button class="btn btn--primary" type="button" data-action="download">
+            <span class="material-symbols-rounded" aria-hidden="true">download</span>
+            تنزيل الصورة
+          </button>
+          <button class="btn" type="button" data-action="copy">
+            <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+            نسخ
+          </button>
+          <button class="btn" type="button" data-action="open-viewer">
+            <span class="material-symbols-rounded" aria-hidden="true">zoom_in_map</span>
+            تكبير
+          </button>
+          <button class="btn" type="button" data-action="open-annotate">
+            <span class="material-symbols-rounded" aria-hidden="true">draw</span>
+            علامة مائية
+          </button>
+          <button class="btn" type="button" data-action="open-compare">
+            <span class="material-symbols-rounded" aria-hidden="true">compare</span>
+            مقارنة
+          </button>
+          <button class="btn" type="button" data-action="open-qr">
+            <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>
+            رمز QR
+          </button>
+          <button class="btn" type="button" data-action="open-embed">
+            <span class="material-symbols-rounded" aria-hidden="true">code</span>
+            الكود
+          </button>
+          <div class="toolbar__spacer"></div>
+          <button class="btn" type="button" data-action="share">
+            <span class="material-symbols-rounded" aria-hidden="true">share</span>
+            رابط مشاركة
+          </button>
+          <button class="btn" type="button" data-action="open-studio">
+            <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
+            3 مقاسات
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel stack" id="galleryPanel" aria-labelledby="gallery-heading">
+      <h2 class="section-title" id="gallery-heading">
+        <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
+        مكتبتك
+        <span class="section-title__aside" id="galleryCount"></span>
+        <button class="btn btn--sm btn--danger" type="button" data-action="clear-gallery">
+          <span class="material-symbols-rounded" aria-hidden="true">delete_sweep</span>
+          مسح الكل
+        </button>
+      </h2>
+      <div class="gallery" id="gallery"></div>
+      <p class="field__hint" id="galleryEmpty">
+        كل لقطة بتتحفظ هنا على جهازك فقط (localStorage) — مفيش رفع لأي حاجة على سيرفراتنا.
+      </p>
+    </section>
+  </div>
+
+  <aside class="stack">
+    <section class="panel stack" aria-labelledby="page-heading">
+      <h2 class="section-title" id="page-heading">
+        <span class="material-symbols-rounded" aria-hidden="true">info</span>
+        بيانات الصفحة
+      </h2>
+      <div class="kv" id="pageMeta">
+        <p class="field__hint">بتظهر بعد أول التقاط ناجح.</p>
+      </div>
+    </section>
+
+    <section class="panel stack" aria-labelledby="engines-heading">
+      <h2 class="section-title" id="engines-heading">
+        <span class="material-symbols-rounded" aria-hidden="true">memory</span>
+        المحركات
+      </h2>
+      <div class="kv" id="engineStatus">
+        <div class="kv__row">
+          <span class="kv__key">أساسي</span>
+          <span class="kv__val" data-role="engine-primary">Microlink</span>
+        </div>
+        <div class="kv__row">
+          <span class="kv__key">احتياطي</span>
+          <span class="kv__val" data-role="engine-fallback">thum.io</span>
+        </div>
+        <div class="kv__row">
+          <span class="kv__key">آخر محرك استخدمه</span>
+          <span class="kv__val" data-role="engine-last">—</span>
+        </div>
+        <p class="field__hint">
+          كل اتنين بيشتغلوا من المتصفح مباشرة بدون API key. لو فشل الأساسي بنتحوّل للاحتياطي تلقائياً.
+        </p>
+      </div>
+    </section>
+  </aside>
+</main>
+
+<footer class="foot">
+  <span>ShotSmith — استوديو التقاط المواقع. كل المعالجة جوه المتصفح.</span>
+  <span>الصور ملكك · <a href="https://microlink.io" target="_blank" rel="noopener noreferrer">Microlink</a> · <a href="https://thum.io" target="_blank" rel="noopener noreferrer">thum.io</a></span>
+</footer>
+
+<dialog class="sheet" id="viewerDialog" aria-labelledby="viewerTitle">
+  <div class="sheet__body">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="viewerTitle">
+        <span class="material-symbols-rounded" aria-hidden="true">photo_size_select_large</span>
+        <span data-role="viewer-caption"></span>
+      </h2>
+      <div class="toolbar__spacer"></div>
+      <span class="tag" data-role="viewer-size"></span>
+      <button class="btn btn--icon" type="button" data-action="zoom-out" aria-label="تصغير">
+        <span class="material-symbols-rounded" aria-hidden="true">remove</span>
+      </button>
+      <button class="btn btn--icon" type="button" data-action="zoom-in" aria-label="تكبير">
+        <span class="material-symbols-rounded" aria-hidden="true">add</span>
+      </button>
+      <button class="btn btn--icon" type="button" data-action="zoom-fit" aria-label="ملء الشاشة">
+        <span class="material-symbols-rounded" aria-hidden="true">fit_screen</span>
+      </button>
+      <button class="btn btn--icon" type="button" data-action="close-viewer" aria-label="إغلاق">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="sheet__content">
+      <div class="viewer-canvas">
+        <img data-role="viewer-image" alt="لقطة الموقع" decoding="async">
+        <div class="viewer-hud" data-role="viewer-zoom" aria-live="polite">100%</div>
+      </div>
+      <p class="field__hint">عجلة الفأرة أو الزوم باللمس للتحبير · اسحب للتحريك · دبل كليك للتكبير السريع · 0 للملاءمة</p>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="compareDialog" aria-labelledby="compareTitle">
+  <div class="sheet__body">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="compareTitle">
+        <span class="material-symbols-rounded" aria-hidden="true">compare</span>
+        مقارنة لقطتين
+      </h2>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--icon" type="button" data-action="close-compare" aria-label="إغلاق">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="sheet__content">
+      <div class="compare" id="compareStage"></div>
+      <p class="field__hint" id="compareHint">اسحب المقبض يميناً ويساراً للمقارنة. اختر اللقطة المقابلة من مكتبتك بالأسفل.</p>
+      <div class="field">
+        <label class="field__label" for="comparePick">اللقطة المقابلة</label>
+        <select class="text-input" id="comparePick"></select>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="annotateDialog" aria-labelledby="annotateTitle">
+  <div class="sheet__body">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="annotateTitle">
+        <span class="material-symbols-rounded" aria-hidden="true">draw</span>
+        علامة مائية قبل الحفظ
+      </h2>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--icon" type="button" data-action="close-annotate" aria-label="إغلاق">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="sheet__content">
+      <div class="field">
+        <label class="field__label" for="wmLabel">العنوان</label>
+        <input class="text-input" type="text" id="wmLabel" placeholder="اسم المشروع أو المنتج">
+      </div>
+      <div class="field">
+        <label class="field__label" for="wmSub">سطر فرعي</label>
+        <input class="text-input" type="text" id="wmSub" placeholder="الإصدار، التاريخ، أو أي ملاحظة">
+      </div>
+      <div class="option-grid">
+        <div class="field">
+          <span class="field__label" id="wmCornerLabel">الركن</span>
+          <div class="segmented" id="wmCorner" role="group" aria-labelledby="wmCornerLabel"></div>
+        </div>
+        <div class="field">
+          <span class="field__label" id="wmStyleLabel">الستايل</span>
+          <div class="segmented" id="wmStyle" role="group" aria-labelledby="wmStyleLabel"></div>
+        </div>
+      </div>
+      <div class="range-row">
+        <div class="range-row__head">
+          <label for="wmPadding">هامش خارج الصورة</label>
+          <span class="range-row__value" id="wmPaddingValue" aria-hidden="true">0px</span>
+        </div>
+        <input type="range" id="wmPadding" min="0" max="160" step="4" value="0"
+               aria-describedby="wmPaddingValue">
+      </div>
+      <div class="stack stack--tight">
+        <label class="switch-row" for="wmTimestamp">
+          <input type="checkbox" id="wmTimestamp" checked>
+          <span class="switch-row__track" aria-hidden="true"></span>
+          <span class="switch-row__text"><span class="switch-row__title">أضف التاريخ والوقت</span></span>
+        </label>
+        <label class="switch-row" for="wmUrl">
+          <input type="checkbox" id="wmUrl" checked>
+          <span class="switch-row__track" aria-hidden="true"></span>
+          <span class="switch-row__text"><span class="switch-row__title">أضف رابط الموقع</span></span>
+        </label>
+      </div>
+    </div>
+    <div class="sheet__foot">
+      <button class="btn btn--primary" type="button" data-action="apply-annotate">
+        <span class="material-symbols-rounded" aria-hidden="true">save</span>
+        حفظ بالعلامة
+      </button>
+      <button class="btn" type="button" data-action="reset-annotate">إعادة ضبط</button>
+      <div class="toolbar__spacer"></div>
+      <button class="btn" type="button" data-action="copy-annotated">نسخ بالعلامة</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="embedDialog" aria-labelledby="embedTitle">
+  <div class="sheet__body">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="embedTitle">
+        <span class="material-symbols-rounded" aria-hidden="true">code</span>
+        الكود الجاهز
+      </h2>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--icon" type="button" data-action="close-embed" aria-label="إغلاق">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="sheet__content">
+      <div class="tabs" id="embedTabs" role="tablist"></div>
+      <div class="code-block" id="embedCode"></div>
+      <p class="field__hint" id="embedNote"></p>
+    </div>
+    <div class="sheet__foot">
+      <button class="btn btn--primary" type="button" data-action="copy-embed">
+        <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+        نسخ الكود
+      </button>
+      <button class="btn" type="button" data-action="open-embed-live">فتح رابط المحرك</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="qrDialog" aria-labelledby="qrTitle">
+  <div class="sheet__body">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="qrTitle">
+        <span class="material-symbols-rounded" aria-hidden="true">qr_code_2</span>
+        رمز QR للرابط
+      </h2>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--icon" type="button" data-action="close-qr" aria-label="إغلاق">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="sheet__content">
+      <div class="qr"><canvas id="qrCanvas" role="img" aria-label="رمز QR للرابط"></canvas></div>
+      <p class="field__hint" id="qrNote"></p>
+    </div>
+    <div class="sheet__foot">
+      <button class="btn btn--primary" type="button" data-action="download-qr">
+        <span class="material-symbols-rounded" aria-hidden="true">download</span>
+        تنزيل PNG
+      </button>
+      <div class="toolbar__spacer"></div>
+      <span class="tag" id="qrTag"></span>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="studioDialog" aria-labelledby="studioTitle">
+  <div class="sheet__body">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="studioTitle">
+        <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
+        استوديو المقاسات الثلاثة
+      </h2>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--icon" type="button" data-action="close-studio" aria-label="إغلاق">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="sheet__content">
+      <p class="field__hint" id="studioStatus">بنلتقط نفس الموقع على 3 مقاسات مختلفة عشان تشوف التجاوب.</p>
+      <div class="gallery" id="studioGallery"></div>
+    </div>
+    <div class="sheet__foot">
+      <button class="btn btn--primary" type="button" data-action="run-studio">
+        <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+        ابدأ الالتقاط
+      </button>
+      <div class="toolbar__spacer"></div>
+      <button class="btn" type="button" data-action="download-all">تنزيل الكل</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="sheet" id="helpDialog" aria-labelledby="helpTitle">
+  <div class="sheet__body">
+    <div class="sheet__head">
+      <h2 class="sheet__title" id="helpTitle">
+        <span class="material-symbols-rounded" aria-hidden="true">help</span>
+        مساعدة واختصارات
+      </h2>
+      <div class="toolbar__spacer"></div>
+      <button class="btn btn--icon" type="button" data-action="close-help" aria-label="إغلاق">
+        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <div class="sheet__content">
+      <div class="kv">
+        <div class="kv__row"><span class="kv__key">التقاط</span><span class="kv__val"><kbd>Enter</kbd> في حقل الرابط</span></div>
+        <div class="kv__row"><span class="kv__key">تركيز حقل الرابط</span><span class="kv__val"><kbd>/</kbd></span></div>
+        <div class="kv__row"><span class="kv__key">أوامر</span><span class="kv__val"><kbd>Ctrl</kbd> + <kbd>K</kbd></span></div>
+        <div class="kv__row"><span class="kv__key">هذه الصفحة</span><span class="kv__val"><kbd>?</kbd></span></div>
+        <div class="kv__row"><span class="kv__key">تكبير/تصغير</span><span class="kv__val"><kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd></span></div>
+        <div class="kv__row"><span class="kv__key">إغلاق</span><span class="kv__val"><kbd>Esc</kbd></span></div>
+      </div>
+      <div class="field">
+        <span class="field__label">إزاي بيشتغل</span>
+        <p class="field__hint">
+          الالتقاط بيتم من متصفحك مباشرة عبر محركات سكرين شوت عامة (Microlink كأساسي و thum.io كاحتياطي).
+          مفيش API key ولا تسجيل ولا رفع للملفات. الحصة اللي بتشوفها فوق مشتركة بين كل المستخدمين، والطلبات
+          المتكررة لنفس الرابط بتتخدم من الكاش فمش بتستهلك منها.
+        </p>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="sheet palette" id="paletteDialog" aria-label="قائمة الأوامر">
+  <div class="palette__box">
+    <div class="palette__input">
+      <span class="material-symbols-rounded" aria-hidden="true">search</span>
+      <input type="text" placeholder="اكتب أمر…" aria-label="بحث في الأوامر" autocomplete="off">
+    </div>
+    <ul class="palette__list"></ul>
+  </div>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+
+<script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

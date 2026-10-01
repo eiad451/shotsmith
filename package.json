@@ -1,0 +1,20 @@
+{
+  "name": "shotsmith",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "استوديو التقاط المواقع — a static, dependency-free screenshot studio",
+  "scripts": {
+    "test": "node test/run-suite.mjs",
+    "test:units": "node test/units.test.mjs",
+    "test:contracts": "node test/contracts.test.mjs",
+    "test:qr": "node test/qr-oracle.test.mjs",
+    "serve": "python3 -m http.server 4173",
+    "icons": "python3 tools/gen-icons.py",
+    "qr-tables": "python3 tools/gen-qr-tables.py",
+    "check": "node --check assets/js/dom.js && node --check assets/js/app.js && node --check sw.js"
+  },
+  "devDependencies": {
+    "linkedom": "^0.18.13"
+  }
+}
