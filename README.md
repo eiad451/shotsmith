@@ -7,9 +7,9 @@
 
 ## Live
 
-```
-https://<user>.github.io/shotsmith/
-```
+**[eiad451.github.io/shotsmith](https://eiad451.github.io/shotsmith/)**
+
+Repository: <https://github.com/eiad451/shotsmith>
 
 ## What it does
 
